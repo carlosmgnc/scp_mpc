@@ -23,11 +23,17 @@ class MPC:
         for i in range(0, self.n):
             indx_row = 14 + (i*14)
             indx_col = 3 + i*(14 + 3)
-            self.A[indx_row : indx_row + 14,  indx_col: indx_col + (14 + 3) ] = np.hstack[[-self.opt.A[k + i], -self.opt.B[k + i], -np.eye(14)]]
+
+            indx_A = (k+i)*14
+            indx_B = (k+i)*3
+
+            A = self.opt.A.value[:, indx_A : indx_A + 14]
+            B = self.opt.B.value[:, indx_B : indx_B + 3]
+            self.A[indx_row : indx_row + 14,  indx_col: indx_col + (14 + 3) ] = np.hstack[[-A, -B, -np.eye(14)]]
         
         #form G matrix
         tmax = self.opt.Tmax
-        fu_lower = np.linalg.norm(self.opt.u[:, [k]]) * self.opt.u[:, [k]].T
+        fu_lower = np.linalg.norm(self.opt.u.value[:, [k]]) * self.opt.u.value[:, [k]].T
         Fu = np.array([[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1], fu_lower])
         for i in range(0, self.n):
             indx_row = (i*Fu.shape[0])

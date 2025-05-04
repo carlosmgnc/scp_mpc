@@ -2,6 +2,8 @@ import numpy as np
 import cvxpy as cvx
 import sympy as sy
 from sympy import *
+from cvxpygen import cpg
+from solver.cpg_solver import cpg_solve 
 
 class optProblem:
     def __init__(self):
@@ -18,14 +20,14 @@ class optProblem:
         self.alpha = 0.07
 
         #discrete time grid
-        self.nk = 20
+        self.nk = 100
         self.K = np.arange(0, self.nk)
         self.dt = 1 / (self.nk - 1)
         self.tau = np.linspace(0, 1, self.nk)
 
         # initial trajectory guess
-        ri = np.array([[4], [3], [0]])
-        vi = np.array([[-0], [-1], [1]])
+        ri = np.array([[4], [4], [0]])
+        vi = np.array([[-0], [-2], [2]])
         self.vf = np.array([[0], [0], [0]])
         self.qi = np.array([[1],[0],[0],[0]])
         self.g = np.array([[-1], [0], [0]])
@@ -52,11 +54,21 @@ class optProblem:
         self.xk = cvx.Parameter((14, self.nk))
         self.uk = cvx.Parameter((3, self.nk))
         self.sigmak = cvx.Parameter(nonneg=True)
-        self.A = cvx.Parameter((self.nk - 1 ,14, 14))
-        self.B = cvx.Parameter((self.nk - 1 ,14, 3))
-        self.C = cvx.Parameter((self.nk - 1 ,14, 3))
+        self.A = cvx.Parameter((14, 14 * (self.nk - 1)))
+        self.B = cvx.Parameter((14, 3 * (self.nk - 1)))
+        self.C = cvx.Parameter((14, 3 * (self.nk - 1)))
         self.E = cvx.Parameter((14, self.nk - 1))
         self.z = cvx.Parameter((14, self.nk - 1))
+
+        self.cos_theta_max = cvx.Parameter(nonneg=True)
+        self.cos_delta_max = cvx.Parameter(nonneg=True)
+        self.w_max = cvx.Parameter(nonneg=True)
+        self.tan_gamma_gs = cvx.Parameter(nonneg=True)
+        
+        self.cos_theta_max.value = np.cos(np.deg2rad(90))
+        self.cos_delta_max.value = np.cos(np.deg2rad(20))
+        self.w_max.value = np.deg2rad(60)
+        self.tan_gamma_gs.value = np.tan(np.deg2rad(20))
 
         # initialize problem parameters
 
@@ -64,9 +76,9 @@ class optProblem:
         self.uk.value = -self.mk * self.g
         self.sigmak.value = self.tfguess
 
-        self.A.value = np.zeros((self.nk - 1, 14, 14))
-        self.B.value = np.zeros((self.nk - 1, 14, 3))
-        self.C.value = np.zeros((self.nk - 1, 14, 3))
+        self.A.value = np.zeros((14, 14 * (self.nk - 1)))
+        self.B.value = np.zeros((14, 3 * (self.nk - 1)))
+        self.C.value = np.zeros((14, 3 * (self.nk - 1)))
         self.E.value = np.zeros((14, self.nk - 1))
         self.z.value = np.zeros((14, self.nk - 1))
 
@@ -220,22 +232,21 @@ class optProblem:
                 P_temp = self.rk41(self.P_dot, sub_time, P_temp, dt_sub)
 
             stm = P_temp[xnd : stmnd].reshape((14, 14))
-            self.A.value[i, :, :] = stm
-            self.B.value[i, :, :] = stm @ P_temp[stmnd : Bnd].reshape((14, 3))
-            self.C.value[i, :, :] = stm @ P_temp[Bnd : Cnd].reshape((14, 3))
+            indx1 = i * 14
+            indx2 = i * 3
+
+            self.A.value[:, indx1:indx1 + 14] = stm
+            self.B.value[:, indx2:indx2 + 3] = stm @ P_temp[stmnd : Bnd].reshape((14, 3))
+            self.C.value[:, indx2:indx2 + 3] = stm @ P_temp[Bnd : Cnd].reshape((14, 3))
             self.E.value[:, [i]] = stm @ P_temp[Cnd : End].reshape((14, 1))
             self.z.value[:, [i]] = stm @ P_temp[End : znd].reshape((14, 1))
 
     def def_cvx_problem(self):
 
+        # hyperparmeters
         w_nu = 100000
         w_delta = 1
         w_sigma = 0.1
-
-        theta_max = np.deg2rad(45)
-        deltamax = np.deg2rad(20)
-        w_max = np.deg2rad(60)
-        gamma_gs = np.deg2rad(20)
 
         nu_cost = 0
         self.constraints += [self.md <= self.x[0, :]]
@@ -256,48 +267,54 @@ class optProblem:
 
             #state and control constraints
             H = np.array([[0, 0, 1, 0], [0, 0, 0, 1]])
-            self.constraints += [np.cos(theta_max) <= 1 - 2 * cvx.square(cvx.norm(H @ self.x[7:11, [k]]))]
-            self.constraints += [cvx.norm(self.x[11:14, [k]]) <= w_max]
+            self.constraints += [self.cos_theta_max <= 1 - 2 * cvx.square(cvx.norm(H @ self.x[7:11, [k]]))]
+            self.constraints += [cvx.norm(self.x[11:14, [k]]) <= self.w_max]
             self.constraints += [cvx.norm(self.u[:, [k]]) <= self.Tmax]
             self.constraints += [self.Tmin*cvx.norm(self.uk[:, [k]]) <= cvx.transpose(self.uk[:, [k]]) @ self.u[:, [k]]]
-            self.constraints += [np.cos(deltamax) * cvx.norm(self.u[:, [k]]) <= self.u[0, [k]]]
+            self.constraints += [self.cos_delta_max * cvx.norm(self.u[:, [k]]) <= self.u[0, [k]]]
 
             e2 = np.array([[0], [1], [0]])
             e3 = np.array([[0], [0], [1]])
             H23 = np.hstack([e2, e3])
 
-            self.constraints += [np.tan(gamma_gs) * cvx.norm(H23.T @ self.x[1:4, [k]]) <= self.x[1, [k]]]
+            self.constraints += [self.tan_gamma_gs * cvx.norm(H23.T @ self.x[1:4, [k]]) <= self.x[1, [k]]]
             self.constraints += [cvx.square(cvx.norm(dx)) + cvx.square(cvx.norm(du)) <= self.delta[k,0] ]
             self.constraints += [cvx.norm(dsigma, 1) <= self.delta_sigma]
         
         #dynamics constrains
         for k in range(0, self.nk - 1):
+            indx1 = k*14
+            indx2 = k*3
             self.constraints += [
                 self.x[:, [k + 1]]
-                == self.A[k, :, :] @ self.x[:, [k]]
-                + self.B[k, :, :] @ self.u[:, [k]]
-                + self.C[k, :, :] @ self.u[:, [k + 1]]
+                == self.A[:, indx1:indx1 + 14] @ self.x[:, [k]]
+                + self.B[:, indx2:indx2 + 3] @ self.u[:, [k]]
+                + self.C[:, indx2:indx2 + 3] @ self.u[:, [k + 1]]
                 + self.E[:, [k]] * self.sigma
                 + self.z[:, [k]]
                 + self.nu[:, [k]]
             ]
 
-            nu_cost += cvx.norm(self.nu[:, [k]], 1)
+            nu_cost += cvx.norm(self.nu[:, [k]])
         
         self.cost = (
             self.sigma
             + w_nu * nu_cost
             + w_delta * cvx.norm(self.delta)
-            + w_sigma * cvx.norm(self.delta_sigma, 1)
+            + w_sigma * cvx.norm(self.delta_sigma)
         )
 
         objective = cvx.Minimize(self.cost)
         self.prob = cvx.Problem(objective, self.constraints)
+
+        cpg.generate_code(self.prob, code_dir='solver', solver='QOCO')
+        #self.prob.register_solve("CPG", cpg_solve) 
     
     def solve_cvx_problem(self):
         print("solving")
         print("----------------------------------")
-        self.prob.solve("ECOS")
+        self.prob.solve(solver="QOCO", ignore_dpp=True)
+        # self.prob.solve(method="CPG")
         print("solver status : " + self.prob.status)
         print("solve time    :" + str(self.prob.solver_stats.solve_time))
         print("cost          :" + str(self.prob.objective.value))
