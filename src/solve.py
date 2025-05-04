@@ -5,18 +5,20 @@ class solveProblem():
     def __init__(self):
 
         self.opt = optProblem()
+        self.opt.def_cvx_problem()
+
         self.max_iter = 15
         self.converged_iter = self.max_iter
         self.sigma_list = np.empty((self.max_iter, 1))
         self.trajectory_list = np.zeros((self.max_iter, 14, self.opt.nk))
 
-        self.x  = np.zeros((14, self.opt.nk))
+        self.x = np.zeros((14, self.opt.nk))
         self.u = np.zeros((3, self.opt.nk))
         self.sigma = 0
         self.cost = 0
         self.nu = np.zeros((14, self.opt.nk-1))
 
-    # successively solve convex sub-problems
+    # sequentially solve convex sub-problems
     def solve(self):
         for i in range(0, self.max_iter):
             self.opt.discretize()

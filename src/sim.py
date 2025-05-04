@@ -1,13 +1,8 @@
 import numpy as np
-import cvxpy as cvx
-import matplotlib.pyplot as plt
-from matplotlib.animation import FuncAnimation
-import sympy as sy
 from sympy import *
 from plot import Plots
 from solve import solveProblem
-
-from opt_problem import optProblem
+from mpc import MPC
 
 class simulation:
     def __init__(self, opt, solver):
@@ -32,7 +27,6 @@ class simulation:
         u = u.flatten()
 
         def sigmaE_f(E_f):
-            
             return self.sigma_opt * E_f
 
         return sigmaE_f(self.opt.E_f(x, u))
@@ -54,6 +48,8 @@ solver = solveProblem()
 plotter = Plots()
 solver.solve()
 
+# mpc = MPC(solver.opt)
+# mpc.canonicalize(0)
 sim = simulation(solver.opt, solver)
 sim.integrate_full_trajectory()
 

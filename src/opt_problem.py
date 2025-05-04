@@ -18,14 +18,14 @@ class optProblem:
         self.alpha = 0.07
 
         #discrete time grid
-        self.nk = 50
+        self.nk = 20
         self.K = np.arange(0, self.nk)
         self.dt = 1 / (self.nk - 1)
         self.tau = np.linspace(0, 1, self.nk)
 
         # initial trajectory guess
         ri = np.array([[4], [3], [0]])
-        vi = np.array([[-0], [-2], [2]])
+        vi = np.array([[-0], [-1], [1]])
         self.vf = np.array([[0], [0], [0]])
         self.qi = np.array([[1],[0],[0],[0]])
         self.g = np.array([[-1], [0], [0]])
@@ -41,19 +41,40 @@ class optProblem:
         self.qk = np.tile(self.qi, (1, self.nk))
         self.wk = np.zeros((3, self.nk))
 
-        self.xk = np.vstack([self.mk, self.rk, self.vk, self.qk, self.wk])
-        self.uk = -self.mk * self.g
+        # optimization problem
+        self.x = cvx.Variable((14, self.nk))
+        self.u = cvx.Variable((3, self.nk))
+        self.sigma = cvx.Variable(nonneg=True)
+        self.nu = cvx.Variable((14, self.nk - 1))
+        self.delta = cvx.Variable((self.nk, 1), nonneg=True)
+        self.delta_sigma = cvx.Variable(nonneg=True)
 
-        self.sigmak = self.tfguess
+        self.xk = cvx.Parameter((14, self.nk))
+        self.uk = cvx.Parameter((3, self.nk))
+        self.sigmak = cvx.Parameter(nonneg=True)
+        self.A = cvx.Parameter((self.nk - 1 ,14, 14))
+        self.B = cvx.Parameter((self.nk - 1 ,14, 3))
+        self.C = cvx.Parameter((self.nk - 1 ,14, 3))
+        self.E = cvx.Parameter((14, self.nk - 1))
+        self.z = cvx.Parameter((14, self.nk - 1))
 
-        self.A = np.empty((self.nk - 1, 14, 14))
-        self.B = np.empty((self.nk - 1, 14, 3))
-        self.C = np.empty((self.nk - 1, 14, 3))
-        self.E = np.empty((14, self.nk - 1))
-        self.z = np.empty((14, self.nk - 1))
+        # initialize problem parameters
+
+        self.xk.value = np.vstack([self.mk, self.rk, self.vk, self.qk, self.wk])
+        self.uk.value = -self.mk * self.g
+        self.sigmak.value = self.tfguess
+
+        self.A.value = np.zeros((self.nk - 1, 14, 14))
+        self.B.value = np.zeros((self.nk - 1, 14, 3))
+        self.C.value = np.zeros((self.nk - 1, 14, 3))
+        self.E.value = np.zeros((14, self.nk - 1))
+        self.z.value = np.zeros((14, self.nk - 1))
 
         self.stm_inv = np.zeros((14, 14))
         self.A_f, self.B_f, self.E_f, self.z_f = self.linearize()
+
+        self.constraints = []
+        self.cost = 0
 
     # Direction Cosine Matrix Function
     def DCM(self, q): 
@@ -107,7 +128,6 @@ class optProblem:
 
         return alphak, betak, tk, tk1, k
     
-
     # returns linearized system matrices as a function
     def linearize(self):
         f_symb = sy.zeros(14, 1)
@@ -126,8 +146,8 @@ class optProblem:
         f_symb[11:14, 0] = Jbinv * (self.cr(rt) * u - self.cr(x[11:14, 0]) * Jb * x[11:14, 0])
 
         f_symb = f_symb
-        A_symb = f_symb.jacobian(x) * self.sigmak
-        B_symb = f_symb.jacobian(u) * self.sigmak
+        A_symb = f_symb.jacobian(x) * self.sigmak.value
+        B_symb = f_symb.jacobian(u) * self.sigmak.value
         z_symb = - A_symb * x - B_symb * u
 
         A_f = sy.lambdify((x, u), A_symb, 'numpy')
@@ -145,14 +165,14 @@ class optProblem:
         alphak, betak, tk, tk1, k = self.get_alphas(t)
 
         if k + 1 <= self.nk-1:
-            u = (alphak * self.uk[:, k] + betak * self.uk[:, k+1]).reshape((3, 1))
+            u = (alphak * self.uk.value[:, k] + betak * self.uk.value[:, k+1]).reshape((3, 1))
         else: 
-            u = (self.uk[:, k]).reshape((3, 1))
+            u = (self.uk.value[:, k]).reshape((3, 1))
 
         X_flat = X[:14].flatten()
         u_flat = u.flatten()
 
-        P1 = self.E_f(X_flat, u_flat) * self.sigmak
+        P1 = self.E_f(X_flat, u_flat) * self.sigmak.value
         P2 = (self.A_f(X_flat, u_flat) @ phi).reshape((14 * 14, 1))
         P3 = (phi_inv @ self.B_f(X_flat, u_flat) * alphak).reshape((14 * 3, 1))
         P4 = (phi_inv @ self.B_f(X_flat, u_flat) * betak).reshape((14 * 3, 1))
@@ -188,7 +208,7 @@ class optProblem:
         P_temp = np.empty((znd, 1))
 
         for i in range(0, self.nk - 1):
-            P_temp[:xnd, [0]] = self.xk[:, [i]]
+            P_temp[:xnd, [0]] = self.xk.value[:, [i]]
             P_temp[xnd: stmnd, [0]] = np.eye(14).reshape((nsq, 1))
             P_temp[stmnd : Bnd, [0]] = np.zeros((14, 3)).reshape((14 * 3, 1))
             P_temp[Bnd: Cnd, [0]] = np.zeros((14, 3)).reshape((14 * 3, 1))
@@ -200,100 +220,92 @@ class optProblem:
                 P_temp = self.rk41(self.P_dot, sub_time, P_temp, dt_sub)
 
             stm = P_temp[xnd : stmnd].reshape((14, 14))
-            self.A[i, :, :] = stm
-            self.B[i, :, :] = stm @ P_temp[stmnd : Bnd].reshape((14, 3))
-            self.C[i, :, :] = stm @ P_temp[Bnd : Cnd].reshape((14, 3))
-            self.E[:, [i]] = stm @ P_temp[Cnd : End].reshape((14, 1))
-            self.z[:, [i]] = stm @ P_temp[End : znd].reshape((14, 1))
+            self.A.value[i, :, :] = stm
+            self.B.value[i, :, :] = stm @ P_temp[stmnd : Bnd].reshape((14, 3))
+            self.C.value[i, :, :] = stm @ P_temp[Bnd : Cnd].reshape((14, 3))
+            self.E.value[:, [i]] = stm @ P_temp[Cnd : End].reshape((14, 1))
+            self.z.value[:, [i]] = stm @ P_temp[End : znd].reshape((14, 1))
 
-
-    def solve_cvx_problem(self):
-        x = cvx.Variable((14, self.nk))
-        u = cvx.Variable((3, self.nk))
-        sigma = cvx.Variable((1, 1), nonneg=True)
-        nu = cvx.Variable((14, self.nk - 1))
-        delta = cvx.Variable((self.nk, 1), nonneg=True)
-        delta_sigma = cvx.Variable(nonneg=True)
+    def def_cvx_problem(self):
 
         w_nu = 100000
-        w_delta = 0.001
+        w_delta = 1
         w_sigma = 0.1
 
-        theta_max = np.deg2rad(90)
+        theta_max = np.deg2rad(45)
         deltamax = np.deg2rad(20)
         w_max = np.deg2rad(60)
         gamma_gs = np.deg2rad(20)
 
         nu_cost = 0
-
-        constraints = []
-        constraints += [self.md <= x[0, :]]
+        self.constraints += [self.md <= self.x[0, :]]
 
         #boundary conditions
-        constraints += [x[0, 0] == self.xk[0, 0]]
-        constraints += [x[1:4, 0] == self.xk[1:4, 0]]
-        constraints += [x[4:7, 0] == self.xk[4:7, 0]]
-        constraints += [x[11:14, 0] == self.xk[11:14, 0]]
+        self.constraints += [self.x[0, 0] == self.xk[0, 0]]
+        self.constraints += [self.x[1:4, 0] == self.xk[1:4, 0]]
+        self.constraints += [self.x[4:7, 0] == self.xk[4:7, 0]]
+        self.constraints += [self.x[11:14, 0] == self.xk[11:14, 0]]
 
-        constraints += [x[1:, -1] == self.xk[1:, -1]]
+        self.constraints += [self.x[1:, -1] == self.xk[1:, -1]]
 
         for k in range(self.nk):
             # difference in state, control and time from last iterate
-            dx = x[:,[k]]-self.xk[:, [k]]
-            du = u[:, [k]]-self.uk[:, [k]]
-            dsigma = sigma - self.sigmak
+            dx = self.x[:,[k]]-self.xk[:, [k]]
+            du = self.u[:, [k]]-self.uk[:, [k]]
+            dsigma = self.sigma - self.sigmak
 
             #state and control constraints
             H = np.array([[0, 0, 1, 0], [0, 0, 0, 1]])
-            constraints += [np.cos(theta_max) <= 1 - 2 * cvx.square(cvx.norm(H @ x[7:11, [k]]))]
-            constraints += [cvx.norm(x[11:14, [k]]) <= w_max]
-            constraints += [cvx.norm(u[:, [k]]) <= self.Tmax]
-            constraints += [self.Tmin <= (np.transpose(self.uk[:, [k]]) / np.linalg.norm(self.uk[:, [k]])) @ u[:, [k]]]
-            constraints += [np.cos(deltamax) * cvx.norm(u[:, [k]]) <= u[0, [k]]]
+            self.constraints += [np.cos(theta_max) <= 1 - 2 * cvx.square(cvx.norm(H @ self.x[7:11, [k]]))]
+            self.constraints += [cvx.norm(self.x[11:14, [k]]) <= w_max]
+            self.constraints += [cvx.norm(self.u[:, [k]]) <= self.Tmax]
+            self.constraints += [self.Tmin*cvx.norm(self.uk[:, [k]]) <= cvx.transpose(self.uk[:, [k]]) @ self.u[:, [k]]]
+            self.constraints += [np.cos(deltamax) * cvx.norm(self.u[:, [k]]) <= self.u[0, [k]]]
 
             e2 = np.array([[0], [1], [0]])
             e3 = np.array([[0], [0], [1]])
             H23 = np.hstack([e2, e3])
 
-            constraints += [np.tan(gamma_gs) * cvx.norm(H23.T @ x[1:4, [k]]) <= x[1, [k]]]
-            constraints += [cvx.square(cvx.norm(dx)) + cvx.square(cvx.norm(du)) <= delta[k,0] ]
-            constraints += [cvx.norm(dsigma, 1) <= delta_sigma]
+            self.constraints += [np.tan(gamma_gs) * cvx.norm(H23.T @ self.x[1:4, [k]]) <= self.x[1, [k]]]
+            self.constraints += [cvx.square(cvx.norm(dx)) + cvx.square(cvx.norm(du)) <= self.delta[k,0] ]
+            self.constraints += [cvx.norm(dsigma, 1) <= self.delta_sigma]
         
         #dynamics constrains
         for k in range(0, self.nk - 1):
-            constraints += [
-                x[:, [k + 1]]
-                == self.A[k, :, :] @ x[:, [k]]
-                + self.B[k, :, :] @ u[:, [k]]
-                + self.C[k, :, :] @ u[:, [k + 1]]
-                + self.E[:, [k]] * sigma[0, 0]
+            self.constraints += [
+                self.x[:, [k + 1]]
+                == self.A[k, :, :] @ self.x[:, [k]]
+                + self.B[k, :, :] @ self.u[:, [k]]
+                + self.C[k, :, :] @ self.u[:, [k + 1]]
+                + self.E[:, [k]] * self.sigma
                 + self.z[:, [k]]
-                + nu[:, [k]]
+                + self.nu[:, [k]]
             ]
 
-            nu_cost += cvx.norm(nu[:, [k]], 1)
+            nu_cost += cvx.norm(self.nu[:, [k]], 1)
         
-        cost = (
-            sigma
+        self.cost = (
+            self.sigma
             + w_nu * nu_cost
-            + w_delta * cvx.norm(delta)
-            + w_sigma * cvx.norm(delta_sigma, 1)
+            + w_delta * cvx.norm(self.delta)
+            + w_sigma * cvx.norm(self.delta_sigma, 1)
         )
 
-        objective = cvx.Minimize(cost)
-        prob = cvx.Problem(objective, constraints)
-
+        objective = cvx.Minimize(self.cost)
+        self.prob = cvx.Problem(objective, self.constraints)
+    
+    def solve_cvx_problem(self):
         print("solving")
         print("----------------------------------")
-        prob.solve("CLARABEL")
-        print("solver status : " + prob.status)
-        print("solve time    :" + str(prob.solver_stats.solve_time))
-        print("cost          :" + str(prob.objective.value))
-        print("sigma         : " + str(sigma.value))
+        self.prob.solve("ECOS")
+        print("solver status : " + self.prob.status)
+        print("solve time    :" + str(self.prob.solver_stats.solve_time))
+        print("cost          :" + str(self.prob.objective.value))
+        print("sigma         : " + str(self.sigma.value))
         print("----------------------------------")
 
-        self.xk = x.value
-        self.uk = u.value
-        self.sigmak = sigma.value
+        self.xk.value = self.x.value
+        self.uk.value = self.u.value
+        self.sigmak.value = self.sigma.value
 
-        return x.value, u.value, sigma.value, cost.value, nu.value
+        return self.x.value, self.u.value, self.sigma.value, self.cost.value, self.nu.value 
