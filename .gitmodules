@@ -1,3 +1,0 @@
-[submodule "qp_solver"]
-	path = qp_solver
-	url = https://github.com/carlosmgnc/qp_solver.git
