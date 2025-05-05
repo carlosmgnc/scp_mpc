@@ -49,7 +49,7 @@ plotter = Plots()
 solver.solve()
 
 # mpc = MPC(solver.opt)
-# mpc.canonicalize(0)
+# mpc.canonicalize(solver.opt.x.value[:, 0], 0)
 sim = simulation(solver.opt, solver)
 sim.integrate_full_trajectory()
 

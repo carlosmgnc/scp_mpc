@@ -3,7 +3,7 @@ import cvxpy as cvx
 import sympy as sy
 from sympy import *
 from cvxpygen import cpg
-from solver.cpg_solver import cpg_solve 
+from scp_solver.cpg_solver import cpg_solve 
 
 class optProblem:
     def __init__(self):
@@ -20,14 +20,14 @@ class optProblem:
         self.alpha = 0.07
 
         #discrete time grid
-        self.nk = 100
+        self.nk = 35
         self.K = np.arange(0, self.nk)
         self.dt = 1 / (self.nk - 1)
         self.tau = np.linspace(0, 1, self.nk)
 
         # initial trajectory guess
         ri = np.array([[4], [4], [0]])
-        vi = np.array([[-0], [-2], [2]])
+        vi = np.array([[-0], [-1], [1]])
         self.vf = np.array([[0], [0], [0]])
         self.qi = np.array([[1],[0],[0],[0]])
         self.g = np.array([[-1], [0], [0]])
@@ -204,7 +204,7 @@ class optProblem:
 
     # discretization using multiple shooting
     def discretize(self):
-        nsub = 15
+        nsub = 5
         dt_sub = self.dt / (nsub + 1)
 
         #indeces for flattened state
@@ -244,7 +244,7 @@ class optProblem:
     def def_cvx_problem(self):
 
         # hyperparmeters
-        w_nu = 100000
+        w_nu = 1000000
         w_delta = 1
         w_sigma = 0.1
 
@@ -307,14 +307,14 @@ class optProblem:
         objective = cvx.Minimize(self.cost)
         self.prob = cvx.Problem(objective, self.constraints)
 
-        cpg.generate_code(self.prob, code_dir='solver', solver='QOCO')
+        cpg.generate_code(self.prob, code_dir='scp_solver', solver='QOCO')
         #self.prob.register_solve("CPG", cpg_solve) 
     
     def solve_cvx_problem(self):
         print("solving")
         print("----------------------------------")
-        self.prob.solve(solver="QOCO", ignore_dpp=True)
-        # self.prob.solve(method="CPG")
+        #self.prob.solve(solver="QOCO", ignore_dpp=True)
+        self.prob.solve(method="CPG")
         print("solver status : " + self.prob.status)
         print("solve time    :" + str(self.prob.solver_stats.solve_time))
         print("cost          :" + str(self.prob.objective.value))
