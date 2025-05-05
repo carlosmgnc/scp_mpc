@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib
 from matplotlib.animation import FuncAnimation
 
 class Plots():
@@ -250,6 +251,8 @@ class Plots():
         #     plt.figure(i).savefig("../images/" + fig_names[i - 1] + ".png", dpi=300)
 
         #animation.save("../images/animation.gif", writer="pillow", fps=1000 / anim_int)
+
+        matplotlib.rcParams['axes3d.mouserotationstyle'] = 'azel'
 
         plt.show(block=False)
         plt.pause(1)

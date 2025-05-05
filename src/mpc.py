@@ -15,7 +15,7 @@ class MPC:
         self.G = np.zeros((self.p, self.n))
         self.h = np.zeros(self.p)
         self.A = np.zeros((self.m, self.n))
-        self.b = np.zeros(self.n)
+        self.b = np.zeros(self.m)
 
         self.H = np.diag([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
         self.F = np.diag([1, 1, 1])
@@ -63,7 +63,16 @@ class MPC:
             indx_Q = i*(14 + 3)
             self.Q[indx_Q: indx_Q + 14, indx_Q : indx_Q + 14] = self.H
             self.Q[indx_Q + 14 : indx_Q + 17, indx_Q + 14 : indx_Q + 17] = self.F
-            
-                
+    
+    def solve(self):
+        print(self.Q.shape)
+        print(self.q.shape)
+        print(self.G.shape)
+        print(self.h.shape)
+        print(self.A.shape)
+        print(self.b.shape)
+        qp = qp_module.QP(self.Q, self.q, self.G, self.h, self.A, self.b)
+        qp.solve()
+        return qp.x
 
         

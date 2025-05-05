@@ -3,11 +3,23 @@ project(mpc_project LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 
-include_directories(${CMAKE_SOURCE_DIR}/lib/eigen-3.4.0)
+include_directories(
+    ${PROJECT_SOURCE_DIR}/qp_solver/include
+    ${PROJECT_SOURCE_DIR}/qp_solver/lib/eigen-3.4.0
+)
 
-add_subdirectory(qp_solver)
+find_package(pybind11 CONFIG REQUIRED)
 
-add_executable(mpc_app qp_solver/src/QP.cpp)
+pybind11_add_module(qp_module
+    src/qp_bindings.cpp
+    qp_solver/src/QP.cpp
+)
 
-target_link_libraries(mpc_app PRIVATE qp_solver_lib)
+set_target_properties(qp_module PROPERTIES
+  LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/src"
+)
 
+target_include_directories(qp_module PRIVATE
+    ${PROJECT_SOURCE_DIR}/qp_solver/include
+    ${PROJECT_SOURCE_DIR}/qp_solver/lib/eigen-3.4.0
+)

@@ -43,7 +43,6 @@ set(CMAKE_MAKEFILE_DEPENDS
   "/Users/carlosm/Documents/guidance/scp_mpc/CMakeLists.txt"
   "CMakeFiles/3.31.4/CMakeCXXCompiler.cmake"
   "CMakeFiles/3.31.4/CMakeSystem.cmake"
-  "/Users/carlosm/Documents/guidance/scp_mpc/qp_solver/CMakeLists.txt"
   "/Users/carlosm/miniconda3/envs/qoco/share/cmake/pybind11/FindPythonLibsNew.cmake"
   "/Users/carlosm/miniconda3/envs/qoco/share/cmake/pybind11/pybind11Common.cmake"
   "/Users/carlosm/miniconda3/envs/qoco/share/cmake/pybind11/pybind11Config.cmake"
@@ -61,12 +60,9 @@ set(CMAKE_MAKEFILE_OUTPUTS
 # Byproducts of CMake generate step:
 set(CMAKE_MAKEFILE_PRODUCTS
   "CMakeFiles/CMakeDirectoryInformation.cmake"
-  "qp_solver/CMakeFiles/CMakeDirectoryInformation.cmake"
   )
 
 # Dependency information for all targets:
 set(CMAKE_DEPEND_INFO_FILES
-  "CMakeFiles/mpc_app.dir/DependInfo.cmake"
-  "qp_solver/CMakeFiles/qp_main.dir/DependInfo.cmake"
-  "qp_solver/CMakeFiles/qp_module.dir/DependInfo.cmake"
+  "CMakeFiles/qp_module.dir/DependInfo.cmake"
   )

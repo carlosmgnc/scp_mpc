@@ -117,32 +117,6 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named mpc_app
-
-# Build rule for target.
-mpc_app: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 mpc_app
-.PHONY : mpc_app
-
-# fast build rule for target.
-mpc_app/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mpc_app.dir/build.make CMakeFiles/mpc_app.dir/build
-.PHONY : mpc_app/fast
-
-#=============================================================================
-# Target rules for targets named qp_main
-
-# Build rule for target.
-qp_main: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 qp_main
-.PHONY : qp_main
-
-# fast build rule for target.
-qp_main/fast:
-	$(MAKE) $(MAKESILENT) -f qp_solver/CMakeFiles/qp_main.dir/build.make qp_solver/CMakeFiles/qp_main.dir/build
-.PHONY : qp_main/fast
-
-#=============================================================================
 # Target rules for targets named qp_module
 
 # Build rule for target.
@@ -152,7 +126,7 @@ qp_module: cmake_check_build_system
 
 # fast build rule for target.
 qp_module/fast:
-	$(MAKE) $(MAKESILENT) -f qp_solver/CMakeFiles/qp_module.dir/build.make qp_solver/CMakeFiles/qp_module.dir/build
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/qp_module.dir/build.make CMakeFiles/qp_module.dir/build
 .PHONY : qp_module/fast
 
 qp_solver/src/QP.o: qp_solver/src/QP.cpp.o
@@ -160,7 +134,7 @@ qp_solver/src/QP.o: qp_solver/src/QP.cpp.o
 
 # target to build an object file
 qp_solver/src/QP.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mpc_app.dir/build.make CMakeFiles/mpc_app.dir/qp_solver/src/QP.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/qp_module.dir/build.make CMakeFiles/qp_module.dir/qp_solver/src/QP.cpp.o
 .PHONY : qp_solver/src/QP.cpp.o
 
 qp_solver/src/QP.i: qp_solver/src/QP.cpp.i
@@ -168,7 +142,7 @@ qp_solver/src/QP.i: qp_solver/src/QP.cpp.i
 
 # target to preprocess a source file
 qp_solver/src/QP.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mpc_app.dir/build.make CMakeFiles/mpc_app.dir/qp_solver/src/QP.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/qp_module.dir/build.make CMakeFiles/qp_module.dir/qp_solver/src/QP.cpp.i
 .PHONY : qp_solver/src/QP.cpp.i
 
 qp_solver/src/QP.s: qp_solver/src/QP.cpp.s
@@ -176,8 +150,32 @@ qp_solver/src/QP.s: qp_solver/src/QP.cpp.s
 
 # target to generate assembly for a file
 qp_solver/src/QP.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/mpc_app.dir/build.make CMakeFiles/mpc_app.dir/qp_solver/src/QP.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/qp_module.dir/build.make CMakeFiles/qp_module.dir/qp_solver/src/QP.cpp.s
 .PHONY : qp_solver/src/QP.cpp.s
+
+src/qp_bindings.o: src/qp_bindings.cpp.o
+.PHONY : src/qp_bindings.o
+
+# target to build an object file
+src/qp_bindings.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/qp_module.dir/build.make CMakeFiles/qp_module.dir/src/qp_bindings.cpp.o
+.PHONY : src/qp_bindings.cpp.o
+
+src/qp_bindings.i: src/qp_bindings.cpp.i
+.PHONY : src/qp_bindings.i
+
+# target to preprocess a source file
+src/qp_bindings.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/qp_module.dir/build.make CMakeFiles/qp_module.dir/src/qp_bindings.cpp.i
+.PHONY : src/qp_bindings.cpp.i
+
+src/qp_bindings.s: src/qp_bindings.cpp.s
+.PHONY : src/qp_bindings.s
+
+# target to generate assembly for a file
+src/qp_bindings.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/qp_module.dir/build.make CMakeFiles/qp_module.dir/src/qp_bindings.cpp.s
+.PHONY : src/qp_bindings.cpp.s
 
 # Help Target
 help:
@@ -187,12 +185,13 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
-	@echo "... mpc_app"
-	@echo "... qp_main"
 	@echo "... qp_module"
 	@echo "... qp_solver/src/QP.o"
 	@echo "... qp_solver/src/QP.i"
 	@echo "... qp_solver/src/QP.s"
+	@echo "... src/qp_bindings.o"
+	@echo "... src/qp_bindings.i"
+	@echo "... src/qp_bindings.s"
 .PHONY : help
 
 

@@ -65,7 +65,7 @@ class optProblem:
         self.w_max = cvx.Parameter(nonneg=True)
         self.tan_gamma_gs = cvx.Parameter(nonneg=True)
         
-        self.cos_theta_max.value = np.cos(np.deg2rad(90))
+        self.cos_theta_max.value = np.cos(np.deg2rad(45))
         self.cos_delta_max.value = np.cos(np.deg2rad(20))
         self.w_max.value = np.deg2rad(60)
         self.tan_gamma_gs.value = np.tan(np.deg2rad(20))
@@ -307,8 +307,8 @@ class optProblem:
         objective = cvx.Minimize(self.cost)
         self.prob = cvx.Problem(objective, self.constraints)
 
-        cpg.generate_code(self.prob, code_dir='scp_solver', solver='QOCO')
-        #self.prob.register_solve("CPG", cpg_solve) 
+        #cpg.generate_code(self.prob, code_dir='scp_solver', solver='QOCO')
+        self.prob.register_solve("CPG", cpg_solve) 
     
     def solve_cvx_problem(self):
         print("solving")
