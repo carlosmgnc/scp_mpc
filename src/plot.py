@@ -157,6 +157,7 @@ class Plots():
         ax.set_zlim3d([0, max_lim])
         ax.plot(ax.get_xlim(), (0, 0), (0, 0), color="black", linestyle="--", linewidth=1)
         ax.plot((0, 0), ax.get_ylim(), (0, 0), color="black", linestyle="--", linewidth=1)
+        ax.plot(solver.trajectory_list[-1, 2, :], solver.trajectory_list[-1, 3, :], solver.trajectory_list[-1, 1, :], linestyle="--", linewidth=0.5, color="black")
 
 
         def shared_traj_plot_properties(ax):
@@ -179,7 +180,7 @@ class Plots():
         #solver.converged_iter
         # for i in range(solver.converged_iter):
         #     #print(trajectory_list[i, 2, :])
-        #     ax_anim.plot3D(solver.trajectory_list[i, 2, :], solver.trajectory_list[i, 3, :], solver.trajectory_list[i, 1, :], linestyle="--", linewidth=0.5, color="black")
+        ax_anim.plot3D(solver.trajectory_list[-1, 2, :], solver.trajectory_list[-1, 3, :], solver.trajectory_list[-1, 1, :], linestyle="--", linewidth=0.5, color="black")
 
         shared_traj_plot_properties(ax_anim)
         ax_anim.set_xlim(ax.get_xlim())

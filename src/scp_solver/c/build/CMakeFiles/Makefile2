@@ -162,9 +162,9 @@ solver_code/lib/qdldl/clean: solver_code/lib/qdldl/CMakeFiles/uninstall.dir/clea
 # Target rules for target CMakeFiles/cpg_example.dir
 
 # All Build rule for target.
+CMakeFiles/cpg_example.dir/all: solver_code/lib/amd/CMakeFiles/amd.dir/all
 CMakeFiles/cpg_example.dir/all: solver_code/CMakeFiles/qocostatic.dir/all
 CMakeFiles/cpg_example.dir/all: solver_code/lib/qdldl/CMakeFiles/qdldlstatic.dir/all
-CMakeFiles/cpg_example.dir/all: solver_code/lib/amd/CMakeFiles/amd.dir/all
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/cpg_example.dir/build.make CMakeFiles/cpg_example.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/cpg_example.dir/build.make CMakeFiles/cpg_example.dir/build
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/carlosm/Documents/guidance/scp_mpc/src/scp_solver/c/build/CMakeFiles --progress-num=27,28,29,30,31,32,33,34,35,36,37,38,39 "Built target cpg_example"
@@ -196,9 +196,9 @@ CMakeFiles/cpg_example.dir/clean:
 # Target rules for target CMakeFiles/cpg.dir
 
 # All Build rule for target.
+CMakeFiles/cpg.dir/all: solver_code/lib/amd/CMakeFiles/amd.dir/all
 CMakeFiles/cpg.dir/all: solver_code/CMakeFiles/qocostatic.dir/all
 CMakeFiles/cpg.dir/all: solver_code/lib/qdldl/CMakeFiles/qdldlstatic.dir/all
-CMakeFiles/cpg.dir/all: solver_code/lib/amd/CMakeFiles/amd.dir/all
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/cpg.dir/build.make CMakeFiles/cpg.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/cpg.dir/build.make CMakeFiles/cpg.dir/build
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/carlosm/Documents/guidance/scp_mpc/src/scp_solver/c/build/CMakeFiles --progress-num=15,16,17,18,19,20,21,22,23,24,25,26 "Built target cpg"
@@ -230,8 +230,8 @@ CMakeFiles/cpg.dir/clean:
 # Target rules for target solver_code/CMakeFiles/qoco.dir
 
 # All Build rule for target.
-solver_code/CMakeFiles/qoco.dir/all: solver_code/lib/qdldl/CMakeFiles/qdldl.dir/all
 solver_code/CMakeFiles/qoco.dir/all: solver_code/lib/amd/CMakeFiles/amd.dir/all
+solver_code/CMakeFiles/qoco.dir/all: solver_code/lib/qdldl/CMakeFiles/qdldl.dir/all
 	$(MAKE) $(MAKESILENT) -f solver_code/CMakeFiles/qoco.dir/build.make solver_code/CMakeFiles/qoco.dir/depend
 	$(MAKE) $(MAKESILENT) -f solver_code/CMakeFiles/qoco.dir/build.make solver_code/CMakeFiles/qoco.dir/build
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/carlosm/Documents/guidance/scp_mpc/src/scp_solver/c/build/CMakeFiles --progress-num=45,46,47,48,49,50,51,52,53,54 "Built target qoco"
@@ -263,8 +263,8 @@ solver_code/CMakeFiles/qoco.dir/clean:
 # Target rules for target solver_code/CMakeFiles/qocostatic.dir
 
 # All Build rule for target.
-solver_code/CMakeFiles/qocostatic.dir/all: solver_code/lib/qdldl/CMakeFiles/qdldlstatic.dir/all
 solver_code/CMakeFiles/qocostatic.dir/all: solver_code/lib/amd/CMakeFiles/amd.dir/all
+solver_code/CMakeFiles/qocostatic.dir/all: solver_code/lib/qdldl/CMakeFiles/qdldlstatic.dir/all
 	$(MAKE) $(MAKESILENT) -f solver_code/CMakeFiles/qocostatic.dir/build.make solver_code/CMakeFiles/qocostatic.dir/depend
 	$(MAKE) $(MAKESILENT) -f solver_code/CMakeFiles/qocostatic.dir/build.make solver_code/CMakeFiles/qocostatic.dir/build
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/carlosm/Documents/guidance/scp_mpc/src/scp_solver/c/build/CMakeFiles --progress-num=55,56,57,58,59,60,61,62,63,64 "Built target qocostatic"

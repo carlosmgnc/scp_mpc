@@ -26,8 +26,8 @@ class optProblem:
         self.tau = np.linspace(0, 1, self.nk)
 
         # initial trajectory guess
-        ri = np.array([[4], [4], [0]])
-        vi = np.array([[-0], [-1], [1]])
+        ri = np.array([[5], [2], [0]])
+        vi = np.array([[0], [-1], [1]])
         self.vf = np.array([[0], [0], [0]])
         self.qi = np.array([[1],[0],[0],[0]])
         self.g = np.array([[-1], [0], [0]])
@@ -65,9 +65,9 @@ class optProblem:
         self.w_max = cvx.Parameter(nonneg=True)
         self.tan_gamma_gs = cvx.Parameter(nonneg=True)
         
-        self.cos_theta_max.value = np.cos(np.deg2rad(45))
+        self.cos_theta_max.value = np.cos(np.deg2rad(90))
         self.cos_delta_max.value = np.cos(np.deg2rad(20))
-        self.w_max.value = np.deg2rad(60)
+        self.w_max.value = np.deg2rad(90)
         self.tan_gamma_gs.value = np.tan(np.deg2rad(20))
 
         # initialize problem parameters
@@ -204,7 +204,7 @@ class optProblem:
 
     # discretization using multiple shooting
     def discretize(self):
-        nsub = 5
+        nsub = 15
         dt_sub = self.dt / (nsub + 1)
 
         #indeces for flattened state
@@ -244,8 +244,8 @@ class optProblem:
     def def_cvx_problem(self):
 
         # hyperparmeters
-        w_nu = 1000000
-        w_delta = 1
+        w_nu = 100000
+        w_delta = 10
         w_sigma = 0.1
 
         nu_cost = 0
