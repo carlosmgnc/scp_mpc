@@ -1,11 +1,14 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/eigen.h>
+#include <pybind11/iostream.h>
 #include "QP.hpp"
 
 namespace py = pybind11;
 
 PYBIND11_MODULE(qp_module, m) {
     m.doc() = "Python bindings for custom QP solver";
+
+    py::add_ostream_redirect(m, "cout_redirect");
 
     py::class_<QP>(m, "QP")
         .def(py::init<

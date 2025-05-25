@@ -1,5 +1,6 @@
 import numpy as np
-from opt_problem import optProblem
+from scp import optProblem
+import time
 
 class solveProblem():
     def __init__(self):
@@ -21,7 +22,13 @@ class solveProblem():
     # sequentially solve convex sub-problems
     def solve(self):
         for i in range(0, self.max_iter):
+
+            t0 = time.perf_counter()
             self.opt.discretize()
+            t1 = time.perf_counter()
+            ms = (t1-t0)*1000
+            print("discretize time: " + str(f"{ms:.2f}") + " ms")
+
             self.x, self.u, self.sigma, self.cost, self.nu = self.opt.solve_cvx_problem()
 
             self.sigma_list[i] = self.sigma

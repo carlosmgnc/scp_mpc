@@ -6,7 +6,7 @@ CXX_DEFINES = -Dqp_module_EXPORTS
 
 CXX_INCLUDES = -I/Users/carlosm/Documents/guidance/scp_mpc/qp_solver/include -I/Users/carlosm/Documents/guidance/scp_mpc/qp_solver/lib/eigen-3.4.0 -isystem /Users/carlosm/miniconda3/envs/qoco/include -isystem /Users/carlosm/miniconda3/envs/qoco/include/python3.13
 
-CXX_FLAGSarm64 = -std=gnu++17 -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX13.3.sdk -fPIC -fvisibility=hidden -flto
+CXX_FLAGSarm64 = -std=gnu++17 -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk -fPIC -fvisibility=hidden -flto
 
-CXX_FLAGS = -std=gnu++17 -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX13.3.sdk -fPIC -fvisibility=hidden -flto
+CXX_FLAGS = -std=gnu++17 -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk -fPIC -fvisibility=hidden -flto
 
