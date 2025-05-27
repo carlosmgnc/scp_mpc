@@ -13,21 +13,25 @@ class MPC:
         self.m = 14*(self.N - 1)
         self.p = 6*(self.N - 1)
 
-        self.H_vec = np.array([1, 1000, 1000, 1000, 1, 1, 1, 500, 500, 500, 500, 1, 1, 1])
-        self.H2_vec = np.array([1, 10000, 10000, 10000, 1, 1, 1, 1000, 1000, 1000, 1000, 10, 10, 10])
+        # self.H_vec = np.array([1, 1000, 1000, 1000, 1, 1, 1, 500, 500, 500, 500, 1, 1, 1])
+        # self.H2_vec = np.array([1, 10000, 10000, 10000, 1, 1, 1, 10000, 10000, 10000, 10000, 10, 10, 10])
+
+        self.H_vec = np.array([1, 100, 100, 100, 1, 1, 1, 100, 100, 100, 100, 10, 100, 100])
+        self.H2_vec = np.array([1, 100000, 100000, 100000, 1, 1, 1, 10000, 10000, 10000, 10000, 1, 1, 1])
 
         self.H = np.diag(self.H_vec)
         self.H2 = np.diag(self.H2_vec)
-        self.F = np.diag([0, 0, 0])
+        self.F = np.diag([1, 1, 1])
 
         self.x = cvx.Variable((14, self.N))
         self.u = cvx.Variable((3, self.N-1))
-        self.u_rcs = cvx.Variable(self.N-1)
+        # self.u_rcs = cvx.Variable(self.N-1)
 
         self.x0 = cvx.Parameter(14)
 
         self.x_ref = cvx.Parameter((14, self.N))
         self.u_ref = cvx.Parameter((3, self.N-1))
+        self.u_ref_sq = cvx.Parameter(self.N-1)
 
         self.A = cvx.Parameter((14, 14 * (self.N - 1)))
         self.B = cvx.Parameter((14, 3 * (self.N - 1)))
@@ -46,6 +50,9 @@ class MPC:
         cost = 0
 
         constraints += [self.x[:, 0] == self.x0 - self.x_ref[:, 0]]
+        # constraints += [self.x[0:7, 0] == self.x0[0:7] - self.x_ref[0:7, 0]]
+        # constraints += [self.x[8:14, 0] == self.x0[8:14] - self.x_ref[8:14, 0]]
+
         for i in range(0, self.N-1):
             
             indx_A = (i)*14
@@ -53,11 +60,13 @@ class MPC:
             A = self.A[:, indx_A : indx_A + 14]
             B = self.B[:, indx_B : indx_B + 3]
 
-            constraints += [self.x[:, i+1] == A @ (self.x[:, i]) + B @ (self.u[:, i]) + self.B_rcs[:, i]*self.u_rcs[i]]
-            constraints += [self.u_rcs[i] <= 0.5]
-            constraints += [self.u_rcs[i] >= -0.5]
+            constraints += [self.x[:, i+1] == A @ (self.x[:, i]) + B @ (self.u[:, i])]
+            # constraints += [self.u_rcs[i] <= 0.5]
+            # constraints += [self.u_rcs[i] >= -0.5]
 
             constraints += [cvx.norm(self.u[:, i] + self.u_ref[:, i]) <= self.opt.Tmax]
+            constraints += [self.opt.Tmin*cvx.norm(self.u_ref[:, i]) <= self.u_ref[:, i] @ self.u[:, i] + self.u_ref_sq[i]]
+            
             constraints += [self.opt.cos_delta_max.value * cvx.norm(self.u_ref[:, i] + self.u[:, i]) <= self.u_ref[0, i] + self.u[0, i]]
 
             cost += cvx.sum_squares(cvx.diag(self.H_sqrt[:, i]) @ self.x[:, i+1]) + cvx.quad_form(self.u[:, i], self.F)
@@ -72,17 +81,19 @@ class MPC:
     def solve_cvxpy(self, x0, k):
         self.x0.value = x0
 
-        #self.prob.solve(solver="QOCO")
+        #self.prob.solve(solver="QOCO", ignore_dpp = True)
         self.prob.solve(method="mpc_socp")
-        print(self.prob.status)
+        # print(self.prob.status)
 
         self.update_params()
 
-        return self.u.value[:, 0], self.u_rcs.value[0]
+        return self.u.value[:, 0], 0 #self.u_rcs.value[0]
     
     def init_params(self):
         self.x_ref.value = self.opt.x.value
         self.u_ref.value = self.opt.u.value[:, :-1]
+        
+        self.u_ref_sq.value = np.array([self.u_ref.value[:, i] @ self.u_ref.value[:, i] for i in range(self.N-1)])
 
         self.A.value = self.opt.A.value
         self.B_zoh = self.opt.B.value + self.opt.C.value
@@ -91,6 +102,7 @@ class MPC:
         
         self.H_sqrt.value = np.tile(np.sqrt(self.H_vec).reshape(14, 1), (1, self.N-1))
         self.H_sqrt.value[:, -1] = np.sqrt(self.H2_vec)
+        # print(self.B_rcs.value)
 
     def update_params(self):
         new_x_ref = np.zeros((14, self.N))
@@ -102,6 +114,11 @@ class MPC:
         new_u_ref[:, :-1] = self.u_ref.value[:, 1:]
         new_u_ref[:, -1] = 0
         self.u_ref.value = new_u_ref
+
+        new_u_ref_sq = np.zeros(self.N-1)
+        new_u_ref_sq[:-1] = self.u_ref_sq.value[1:]
+        new_u_ref_sq[-1] = 0
+        self.u_ref_sq.value = new_u_ref_sq
         
         new_A = np.zeros((14, 14*(self.N-1)))
         new_A[:, :-14] = self.A.value[:, 14:]

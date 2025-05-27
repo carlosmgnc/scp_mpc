@@ -84,13 +84,9 @@ solver.solve()
 mpc = MPC(solver.opt)
 mpc.def_cvxpy_problem()
 
-np.random.seed(0)
+np.random.seed(10)
 
-num_tests = 20
-rand_init = 0.2*np.random.uniform(-1, 1, size=(3,num_tests))
-max_angle = np.deg2rad(7)
-
-def random_quaternion_perturbation(max_angle_rad):
+def rand_quat_perturbation(max_angle_rad):
     axis = np.random.randn(3)
     axis /= np.linalg.norm(axis)
     angle = np.random.choice([-max_angle_rad, max_angle_rad])
@@ -105,16 +101,21 @@ def quat_multiply(q1, q2):
         w1*w2 - x1*x2 - y1*y2 - z1*z2,
         w1*x2 + x1*w2 + y1*z2 - z1*y2,
         w1*y2 - x1*z2 + y1*w2 + z1*x2,
-        w1*z2 + x1*y2 - y1*x2 + z1*w2
-    ])
+        w1*z2 + x1*y2 - y1*x2 + z1*w2])
 
-for i in range(rand_init.shape[1]):
+num_tests = 50
+rand_pos_perturbation = 0.25*np.random.uniform(-1, 1, size=(3,num_tests))
+rand_vel_perturbation = 0.1*np.random.uniform(-1, 1, size=(3,num_tests))
+max_angle = np.deg2rad(10)
+
+for i in range(num_tests):
     sim = simulation(solver, mpc)
-    sim.trajectory[1:4, 0] += rand_init[:, i]
+    sim.trajectory[1:4, 0] += rand_pos_perturbation[:, i]
+    sim.trajectory[4:7, 0] += rand_vel_perturbation[:, i]
 
     q_nom = sim.trajectory[7:11,0]
-    q_delta = random_quaternion_perturbation(max_angle)
-    q_init  = quat_multiply(q_delta, q_nom)
+    q_delta = rand_quat_perturbation(max_angle)
+    q_init = quat_multiply(q_delta, q_nom)
     q_init /= np.linalg.norm(q_init)
     sim.trajectory[7:11,0] = q_init
 

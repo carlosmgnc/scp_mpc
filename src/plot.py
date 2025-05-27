@@ -135,7 +135,7 @@ class Plots():
         base_y = x[2, :] - q[1, :]
         base_z = x[3, :] - q[2, :]
 
-        skip = 5
+        skip = 34
         self.ax.quiver(
             base_y[::skip],
             base_z[::skip],
@@ -261,7 +261,7 @@ class Plots():
         # anim_int = 100
         # animation = FuncAnimation(fig_anim, update, frames=opt.nk, interval=anim_int)
 
-        # fig_names = ["position", "mass", "control", "throttle", "virtual_control", "tof_iteration", "trajectory", "animation"]
+        fig_names = ["position", "mass", "control", "throttle", "virtual_control", "tof_iteration", "trajectory", "animation"]
 
         # for i in range(1, 8):
         #     plt.figure(i).savefig("../images/" + fig_names[i - 1] + ".png", dpi=300)
