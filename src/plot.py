@@ -135,7 +135,7 @@ class Plots():
         base_y = x[2, :] - q[1, :]
         base_z = x[3, :] - q[2, :]
 
-        skip = 34
+        skip = 5
         self.ax.quiver(
             base_y[::skip],
             base_z[::skip],

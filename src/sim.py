@@ -103,10 +103,10 @@ def quat_multiply(q1, q2):
         w1*y2 - x1*z2 + y1*w2 + z1*x2,
         w1*z2 + x1*y2 - y1*x2 + z1*w2])
 
-num_tests = 50
+num_tests = 1
 rand_pos_perturbation = 0.25*np.random.uniform(-1, 1, size=(3,num_tests))
 rand_vel_perturbation = 0.1*np.random.uniform(-1, 1, size=(3,num_tests))
-max_angle = np.deg2rad(10)
+max_angle = np.deg2rad(15)
 
 for i in range(num_tests):
     sim = simulation(solver, mpc)
