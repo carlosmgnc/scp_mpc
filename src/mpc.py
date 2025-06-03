@@ -7,14 +7,14 @@ from mpc_socp_solver.cpg_solver import cpg_solve
 class MPC:
     def __init__(self, opt):
         self.opt = opt
-        self.N = 35
+        self.N = 30
 
         self.n = (self.N - 1)*(14 + 3)
         self.m = 14*(self.N - 1)
         self.p = 6*(self.N - 1)
 
-        # self.H_vec = np.array([1, 1000, 1000, 1000, 1, 1, 1, 500, 500, 500, 500, 1, 1, 1])
-        # self.H2_vec = np.array([1, 10000, 10000, 10000, 1, 1, 1, 10000, 10000, 10000, 10000, 10, 10, 10])
+        # self.H_vec = np.array([1, 5000, 5000, 5000, 100, 100, 100, 5000, 5000, 5000, 5000, 1, 1, 1])
+        # self.H2_vec = np.array([1, 10000, 10000, 10000, 1, 1, 1, 0, 0, 100000, 100000, 10, 10, 10])
 
         self.H_vec = np.array([1, 100, 100, 100, 1, 1, 1, 100, 100, 100, 100, 10, 100, 100])
         self.H2_vec = np.array([1, 100000, 100000, 100000, 1, 1, 1, 0, 0, 10000, 10000, 1, 1, 1])
@@ -50,8 +50,6 @@ class MPC:
         cost = 0
 
         constraints += [self.x[:, 0] == self.x0 - self.x_ref[:, 0]]
-        # constraints += [self.x[0:7, 0] == self.x0[0:7] - self.x_ref[0:7, 0]]
-        # constraints += [self.x[8:14, 0] == self.x0[8:14] - self.x_ref[8:14, 0]]
 
         for i in range(0, self.N-1):
             

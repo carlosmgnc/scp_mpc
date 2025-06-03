@@ -25,6 +25,9 @@ class simulation:
         self.u_mpc_list = np.zeros((3, self.solver.opt.nk))
         self.u_rcs_list = np.zeros(self.solver.opt.nk)
 
+        self.u_pert_list = np.zeros((14, self.solver.opt.nk-1))
+        self.u_pert = np.zeros((14, 1))
+
 
     # nonlinear dynamics derivative function for rk4
     def nonlin_func(self, t, X):
@@ -39,7 +42,7 @@ class simulation:
         u = u.flatten()
 
         def dyn(E_f):
-            return self.sigma_opt * (E_f + self.solver.opt.B_rcs_ct * self.u_rcs)
+            return self.sigma_opt * (E_f + self.solver.opt.B_rcs_ct * self.u_rcs + self.u_pert)
 
         return dyn(self.solver.opt.E_f(x, u + self.u_mpc))
     
@@ -62,29 +65,23 @@ class simulation:
 
             # cvxpy solver
             t0 = time.perf_counter()
+            # self.u_mpc = 0
+            # self.u_rcs = 0
             self.u_mpc, self.u_rcs = self.mpc.solve_cvxpy(self.trajectory[:, i], i)
             t1 = time.perf_counter()
             ms = (t1-t0)*1000
             print("solver time: " + str(f"{ms:.2f}") + " ms")
 
+            self.u_pert = self.u_pert_list[:, [i]]
+
             self.u_mpc_list[:, i] = self.u_mpc
             self.u_rcs_list[i] = self.u_rcs
             
-
             for j in range(0, nsub + 1):
                 sub_time = i * self.solver.opt.dt + j * dt_sub
                 P_temp = self.solver.opt.rk41(self.nonlin_func, sub_time, P_temp, dt_sub)
 
             self.trajectory[:, [i + 1]] = P_temp
-
-solver = solveProblem()
-plotter = Plots()
-solver.solve()
-
-mpc = MPC(solver.opt)
-mpc.def_cvxpy_problem()
-
-np.random.seed(10)
 
 def rand_quat_perturbation(max_angle_rad):
     axis = np.random.randn(3)
@@ -103,15 +100,27 @@ def quat_multiply(q1, q2):
         w1*y2 - x1*z2 + y1*w2 + z1*x2,
         w1*z2 + x1*y2 - y1*x2 + z1*w2])
 
-num_tests = 1
+solver = solveProblem()
+plotter = Plots(anim=False, skip=29)
+solver.solve()
+
+mpc = MPC(solver.opt)
+mpc.def_cvxpy_problem()
+
+np.random.seed(10)
+
+num_tests = 10
 rand_pos_perturbation = 0.25*np.random.uniform(-1, 1, size=(3,num_tests))
 rand_vel_perturbation = 0.1*np.random.uniform(-1, 1, size=(3,num_tests))
-max_angle = np.deg2rad(15)
+rand_u_perturbation = 0.05*np.random.uniform(-1, 1, size=(num_tests, 3, solver.opt.nk-1))
+
+max_angle = np.deg2rad(0)
 
 for i in range(num_tests):
     sim = simulation(solver, mpc)
     sim.trajectory[1:4, 0] += rand_pos_perturbation[:, i]
     sim.trajectory[4:7, 0] += rand_vel_perturbation[:, i]
+    sim.u_pert_list[4:7, :] = rand_u_perturbation[i]
 
     q_nom = sim.trajectory[7:11,0]
     q_delta = rand_quat_perturbation(max_angle)

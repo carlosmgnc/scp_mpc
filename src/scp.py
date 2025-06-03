@@ -21,14 +21,14 @@ class optProblem:
         self.alpha = 0.07
 
         #discrete time grid
-        self.nk = 35
+        self.nk = 30
         self.K = np.arange(0, self.nk)
         self.dt = 1 / (self.nk - 1)
         self.tau = np.linspace(0, 1, self.nk)
 
         # initial trajectory guess
         ri = np.array([[4], [2], [0]])
-        vi = np.array([[-1], [-1], [1]])
+        vi = np.array([[-0.9], [-0.9], [0.9]])
         self.vf = np.array([[0], [0], [0]])
         self.qi = np.array([[1],[0],[0],[0]])
         self.g = np.array([[-1], [0], [0]])
@@ -218,7 +218,7 @@ class optProblem:
 
     # discretization using multiple shooting
     def discretize(self):
-        nsub = 2
+        nsub = 15
         dt_sub = self.dt / (nsub + 1)
 
         #indeces for flattened state
@@ -280,8 +280,8 @@ class optProblem:
 
         for k in range(self.nk):
             # difference in state, control and time from last iterate
-            dx = self.x[:,[k]]-self.xk[:, [k]]
-            du = self.u[:, [k]]-self.uk[:, [k]]
+            dx = self.x[:,[k]] - self.xk[:, [k]]
+            du = self.u[:, [k]] - self.uk[:, [k]]
             dsigma = self.sigma - self.sigmak
 
             #state and control constraints
@@ -328,7 +328,7 @@ class optProblem:
     def solve_cvx_problem(self):
         print("solving")
         print("----------------------------------")
-        #self.prob.solve(solver="QOCO", ignore_dpp=True)
+        #self.prob.solve(solver="CLARABEL", ignore_dpp=True)
         self.prob.solve(method="scp_socp")
         print("solver status : " + self.prob.status)
         print("solve time    : " + f"{self.prob.solver_stats.solve_time * 1000:.2f}" + " ms")
