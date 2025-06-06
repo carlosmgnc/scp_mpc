@@ -75,11 +75,13 @@ class Plots():
         plt.ylabel("thrust vector")
 
         plt.figure(4)
-        plt.title("norm(thrust_vector) vs time")
-        plt.plot(opt.tau[:], np.linalg.norm(u[:, :], axis=0), linestyle="--")
-        plt.plot(opt.tau[:], np.linalg.norm(u[:, :] + sim.u_mpc_list[:, :], axis=0))
+        plt.title("$\| T(t) \|$  vs Time")
+        plt.plot(opt.tau[:], np.linalg.norm(u[:, :] + sim.u_mpc_list[:, :], axis=0), color="lightgrey")
+        plt.plot(opt.tau[:], np.linalg.norm(u[:, :], axis=0), linestyle="--", color="blue")
+        plt.plot([opt.tau[0], opt.tau[-1]], [opt.Tmax, opt.Tmax], linestyle='--', color='black', linewidth=1)
+        plt.plot([opt.tau[0], opt.tau[-1]], [opt.Tmin, opt.Tmin], linestyle='--', color='black', linewidth=1)
         plt.xlabel("time")
-        plt.ylabel("thrust")
+        plt.ylabel("$\| T(t) \|$")
 
         plt.figure(5)
         plt.title("virtual control")
@@ -108,7 +110,7 @@ class Plots():
         self.ax.view_init(elev=25, azim=161)
 
         #ax.view_init(elev=0, azim=90)
-        self.ax.plot3D(x[2, :], x[3, :], x[1, :])
+        self.ax.plot3D(x[2, :], x[3, :], x[1, :], color="darkgrey")
 
         # fix aspect ratio of 3d plot
         x_lim = self.ax.get_xlim3d()
@@ -199,7 +201,7 @@ class Plots():
         self.ax.plot(self.ax.get_xlim(), (0, 0), (0, 0), color="black", linestyle="--", linewidth=1)
         self.ax.plot((0, 0), self.ax.get_ylim(), (0, 0), color="black", linestyle="--", linewidth=1)
         # self.ax.plot(solver.trajectory_list[-1, 2, :], solver.trajectory_list[-1, 3, :], solver.trajectory_list[-1, 1, :], linestyle="--", linewidth=0.5, color="black")
-        self.ax.plot(opt.x.value[2, :], opt.x.value[3, :], opt.x.value[1, :], linestyle="--", linewidth=0.5, color="black")
+        self.ax.plot(opt.x.value[2, :], opt.x.value[3, :], opt.x.value[1, :], linestyle="--", linewidth=2, color="blue")
 
 
         def shared_traj_plot_properties(ax):

@@ -12,7 +12,7 @@ class optProblem:
         # vehicle properties
         self.mw = 2.0
         self.md = 1.0
-        self.Tmax = 5
+        self.Tmax = 4.0
         self.Tmin = 1
         self.rt = np.array([[-0.01], [0], [0]])
         self.Jbvec = np.array([[0.01], [0.01], [0.01]])
@@ -28,7 +28,7 @@ class optProblem:
 
         # initial trajectory guess
         ri = np.array([[4], [2], [0]])
-        vi = np.array([[-0.9], [-0.9], [0.9]])
+        vi = np.array([[-1], [-1], [1]])
         self.vf = np.array([[0], [0], [0]])
         self.qi = np.array([[1],[0],[0],[0]])
         self.g = np.array([[-1], [0], [0]])
@@ -91,8 +91,6 @@ class optProblem:
         self.B_rcs = np.zeros((14, self.nk - 1))
         self.B_rcs_ct = np.zeros((14, 1))
         self.B_rcs_ct[11, 0] = 1*self.Jbinv[0,0]
-
-        print("b_rcs: " + str(self.B_rcs_ct))
 
         self.stm_inv = np.zeros((14, 14))
         self.A_f, self.B_f, self.E_f, self.z_f = self.def_jacobian_funcs()

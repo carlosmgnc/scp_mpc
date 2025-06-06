@@ -101,7 +101,7 @@ def quat_multiply(q1, q2):
         w1*z2 + x1*y2 - y1*x2 + z1*w2])
 
 solver = solveProblem()
-plotter = Plots(anim=False, skip=29)
+plotter = Plots(anim=False, skip=15)
 solver.solve()
 
 mpc = MPC(solver.opt)
@@ -109,13 +109,14 @@ mpc.def_cvxpy_problem()
 
 np.random.seed(10)
 
-num_tests = 10
+num_tests = 50
 rand_pos_perturbation = 0.25*np.random.uniform(-1, 1, size=(3,num_tests))
 rand_vel_perturbation = 0.1*np.random.uniform(-1, 1, size=(3,num_tests))
-rand_u_perturbation = 0.05*np.random.uniform(-1, 1, size=(num_tests, 3, solver.opt.nk-1))
+rand_u_perturbation = 0.0*np.random.uniform(-1, 1, size=(num_tests, 3, solver.opt.nk-1))
 
-max_angle = np.deg2rad(0)
-
+max_angle = np.deg2rad(10)
+max_landing_error = 0
+max_tilt = 0
 for i in range(num_tests):
     sim = simulation(solver, mpc)
     sim.trajectory[1:4, 0] += rand_pos_perturbation[:, i]
@@ -134,6 +135,20 @@ for i in range(num_tests):
     plotter.plot(solver, sim)
 
     print("final position: " + str(sim.trajectory[1:4, -1]))
+    landing_error = np.linalg.norm(sim.trajectory[1:4, -1])
+    if landing_error > max_landing_error:
+        max_landing_error = landing_error
+
+    tilt = np.rad2deg(np.arccos(1 - sim.trajectory[9, -1]**2 + sim.trajectory[10, -1]**2))
+    if tilt > max_tilt:
+        max_tilt = tilt
+
+fig_names = ["position", "mass", "control", "throttle", "virtual_control", "tof_iteration", "trajectory", "animation"]
+for i in range(1, 8):
+        plt.figure(i).savefig("../images/" + fig_names[i - 1] + ".png", dpi=300)
+
+print("max_landing_error: " + str(max_landing_error))
+print("max_tilt:  " + str(max_tilt))
 
 plt.show(block=False)
 plt.pause(1)
